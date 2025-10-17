@@ -2,8 +2,6 @@ name: CI PHP Sencillo
 
 on:
   push:
-    branches: [""]
-  pull_request:
     branches: ["main"]
 
 jobs:
