@@ -19,7 +19,7 @@ jobs:
         with:
           php-version: "8.2"
           coverage: none
-          tools: composer, php-cs-fixer
+          tools: composer
 
       - name: Cache Composer (si aplica)
         uses: actions/cache@v4
@@ -32,18 +32,16 @@ jobs:
         if: hashFiles('/composer.json') != ''
         run: composer install --no-interaction --no-progress --prefer-dist
 
-      - name: Lint rápido de PHP (syntax check)
+      - name: Lint de sintaxis PHP
         run: |
           set -e
           mapfile -t FILES < <(git ls-files '*.php')
           if [ ${#FILES[@]} -eq 0 ]; then
-            echo "No hay archivos .php, nada que lint-ear"
+            echo "No hay archivos .php"
           else
-            for f in "${FILES[@]}"; do
-              php -l "$f"
-            done
+            for f in "${FILES[@]}"; do php -l "$f"; done
           fi
 
-      - name: Ejecutar pruebas (si existen)
+      - name: Ejecutar pruebas (si hay phpunit.xml)
         if: hashFiles('/phpunit.xml') != ''
         run: ./vendor/bin/phpunit --no-coverage

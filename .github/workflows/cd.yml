@@ -4,20 +4,51 @@ on:
   push:
     branches: ["main"]
 
+permissions:
+  contents: write  # necesario para push a la rama deploy
+
 jobs:
   ship:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout (repo completo)
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Preparar artefacto simple
-        run: |
-          rm -rf .git .github tests phpunit.xml README.md || true
-          mkdir -p build && cp -r . build/ || true
+      - name: Configurar PHP (si hay Composer)
+        if: hashFiles('/composer.json') != ''
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          coverage: none
+          tools: composer
 
-      - name: Publicar en rama deploy
+      - name: Instalar dependencias de producción (si aplica)
+        if: hashFiles('/composer.json') != ''
+        run: composer install --no-dev --no-interaction --no-progress --prefer-dist
+
+      - name: Preparar artefacto (carpeta build/)
+        run: |
+          rm -rf build
+          mkdir -p build
+          # Copia todo el proyecto salvo archivos que no quieres en el artefacto
+          rsync -av --delete \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'tests' \
+            --exclude 'phpunit.xml' \
+            --exclude '.env' \
+            --exclude 'README.md' \
+            ./ build/
+
+      - name: Subir ZIP como artefacto de Actions (opcional, útil para demo)
+        uses: actions/upload-artifact@v4
+        with:
+          name: paquete-php
+          path: build
+
+      - name: Publicar build/ en rama deploy
         uses: s0/git-publish-subdir-action@v2.6.0
         env:
           REPO: self
