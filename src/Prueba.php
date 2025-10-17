@@ -1,2 +1,2 @@
 <?php
-function saludo($nombre) { return "Hola, $nombre"; }
+function saludo($nombre) { return "Holaaas, $nombre"; }
